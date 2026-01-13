@@ -1,0 +1,9 @@
+apiVersion: v2
+name: pifagor2-web
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: main
+    version: 0.0.1
+    repository: "file://../../helm-charts/main/0.0.1"

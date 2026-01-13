@@ -4,11 +4,9 @@ metadata:
   name: default
   namespace: argocd
 spec:
+  description: Default project
   sourceRepos:
     - '*'
   destinations:
     - namespace: '*'
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+      server: '*'

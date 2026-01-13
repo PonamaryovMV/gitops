@@ -1,5 +1,1 @@
-image:
-  repository: alpine
-  tag: "3.19"
-
-env: uat
+# Values for pifagor2-web in uat

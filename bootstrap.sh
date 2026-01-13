@@ -1,126 +1,105 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
-APPS=(
-  pifagor2-onboarding
-  pifagor2-web
-  pifagor2-api
-)
+echo "==> Стартируем bootstrap репозитория GitOps"
 
-ENVS=(dev uat prod)
+# Определяем корень репозитория
+REPO_ROOT="$(pwd)"
 
-echo "📁 Bootstrapping GitOps repo in current directory..."
+# Папки
+APPS_DIR="${REPO_ROOT}/apps"
+HELM_DIR="${REPO_ROOT}/helm-charts"
+PROJECTS_DIR="${REPO_ROOT}/projects"
 
-mkdir -p applicationsets projects apps helm-charts
+# Список приложений и окружений
+APPLICATIONS=("pifagor2-api" "pifagor2-web" "pifagor2-onboarding")
+ENVS=("dev" "uat" "prod")
 
-# -------------------------
-# Helm main chart
-# -------------------------
-MAIN_CHART=helm-charts/main/0.0.1
-mkdir -p $MAIN_CHART/templates
+# Создаём базовые директории
+mkdir -p "${APPS_DIR}" "${HELM_DIR}/main/0.0.1/templates" "${PROJECTS_DIR}"
 
-cat > $MAIN_CHART/Chart.yaml <<EOF
+# Создаём dummy main chart
+cat > "${HELM_DIR}/main/0.0.1/Chart.yaml" <<EOF
 apiVersion: v2
 name: main
 version: 0.0.1
+appVersion: "0.0.1"
 EOF
 
-cat > $MAIN_CHART/values.yaml <<EOF
-image:
-  repository: alpine
-  tag: "3.19"
-  pullPolicy: IfNotPresent
-
-command:
-  - sleep
-  - "3600"
-EOF
-
-cat > $MAIN_CHART/templates/deployment.yaml <<'EOF'
+# Пустой deployment.yaml для main chart
+cat > "${HELM_DIR}/main/0.0.1/templates/deployment.yaml" <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: dummy-main
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      app: dummy-main
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: dummy-main
     spec:
       containers:
-        - name: app
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: {{ toYaml .Values.command | nindent 12 }}
+      - name: dummy
+        image: alpine:3.18
+        command: ["sh", "-c", "sleep 3600"]
 EOF
 
-# -------------------------
-# Applications
-# -------------------------
-for APP in "${APPS[@]}"; do
-  echo "📦 Creating app $APP"
+# Пустые values.yaml для main chart
+echo "{}" > "${HELM_DIR}/main/0.0.1/values.yaml"
 
-  APP_DIR=apps/$APP
-  mkdir -p $APP_DIR/values
-
-  cat > $APP_DIR/Chart.yaml <<EOF
-apiVersion: v2
-name: $APP
-version: 0.1.0
-appVersion: "0.1.0"
-
-dependencies:
-  - name: main
-    version: 0.0.1
-    repository: "file://../../helm-charts/main/0.0.1"
-EOF
-
-  for ENV in "${ENVS[@]}"; do
-    cat > $APP_DIR/values/$ENV.yaml <<EOF
-image:
-  repository: alpine
-  tag: "3.19"
-
-env: $ENV
-EOF
-  done
-
-  cat > $APP_DIR/README.md <<EOF
-# $APP
-
-Test application for Argo CD GitOps bootstrap.
-EOF
-
-done
-
-# -------------------------
-# AppProject
-# -------------------------
-cat > projects/default.yaml <<'EOF'
+# Создаём проекты
+cat > "${PROJECTS_DIR}/default.yaml" <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: default
   namespace: argocd
 spec:
+  description: Default project
   sourceRepos:
     - '*'
   destinations:
     - namespace: '*'
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+      server: '*'
 EOF
 
-# -------------------------
-# ApplicationSet
-# -------------------------
-cat > applicationsets/apps.yaml <<'EOF'
+# Создаём приложения
+for app in "${APPLICATIONS[@]}"; do
+  APP_DIR="${APPS_DIR}/${app}"
+  mkdir -p "${APP_DIR}/values" "${APP_DIR}/charts/main/0.0.1/templates"
+
+  # README.md
+  echo "# ${app}" > "${APP_DIR}/README.md"
+
+  # Chart.yaml wrapper chart
+  cat > "${APP_DIR}/Chart.yaml" <<EOF
+apiVersion: v2
+name: ${app}
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: main
+    version: 0.0.1
+    repository: "file://charts/main/0.0.1"
+EOF
+
+  # Копируем dummy main chart внутрь приложения
+  cp -r "${HELM_DIR}/main/0.0.1/." "${APP_DIR}/charts/main/0.0.1/"
+
+  # Создаём пустые values для окружений
+  for env in "${ENVS[@]}"; do
+    echo "# Values for ${app} in ${env}" > "${APP_DIR}/values/${env}.yaml"
+  done
+done
+
+# Создаём ApplicationSet папку с пустым примером
+mkdir -p "${REPO_ROOT}/applicationsets"
+cat > "${REPO_ROOT}/applicationsets/apps.yaml" <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -128,36 +107,30 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://REPLACE_ME/infra-gitops.git
-        revision: HEAD
-        directories:
-          - path: apps/*
+    - list:
+        elements:
+          - env: dev
+          - env: uat
+          - env: prod
   template:
     metadata:
-      name: '{{path.basename}}-dev'
+      name: '{{path.basename}}-{{env}}'
     spec:
       project: default
       source:
-        repoURL: https://REPLACE_ME/infra-gitops.git
-        targetRevision: HEAD
-        path: '{{path}}'
+        repoURL: <REPO_URL>
+        targetRevision: main
+        path: apps/{{path.basename}}
         helm:
           valueFiles:
-            - values/dev.yaml
+            - values/{{env}}.yaml
       destination:
         server: https://kubernetes.default.svc
-        namespace: dev
+        namespace: '{{path.basename}}-{{env}}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
 EOF
 
-cat > README.md <<EOF
-# GitOps repository
-
-Bootstrap structure for Argo CD testing.
-EOF
-
-echo "✅ Bootstrap completed successfully"
+echo "==> Bootstrap репозитория завершён! Структура готова для ArgoCD"

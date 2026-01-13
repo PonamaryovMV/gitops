@@ -1,5 +1,1 @@
-image:
-  repository: alpine
-  tag: "3.19"
-
-env: dev
+# Values for pifagor2-api in dev

@@ -6,4 +6,4 @@ appVersion: "0.1.0"
 dependencies:
   - name: main
     version: 0.0.1
-    repository: "file://../../helm-charts/main/0.0.1"
+    repository: "file://charts/main/0.0.1"

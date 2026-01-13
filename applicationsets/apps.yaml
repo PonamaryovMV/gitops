@@ -5,26 +5,26 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://REPLACE_ME/infra-gitops.git
-        revision: HEAD
-        directories:
-          - path: apps/*
+    - list:
+        elements:
+          - env: dev
+          - env: uat
+          - env: prod
   template:
     metadata:
-      name: '{{path.basename}}-dev'
+      name: '{{path.basename}}-{{env}}'
     spec:
       project: default
       source:
-        repoURL: https://REPLACE_ME/infra-gitops.git
-        targetRevision: HEAD
-        path: '{{path}}'
+        repoURL: <REPO_URL>
+        targetRevision: main
+        path: apps/{{path.basename}}
         helm:
           valueFiles:
-            - values/dev.yaml
+            - values/{{env}}.yaml
       destination:
         server: https://kubernetes.default.svc
-        namespace: dev
+        namespace: '{{path.basename}}-{{env}}'
       syncPolicy:
         automated:
           prune: true

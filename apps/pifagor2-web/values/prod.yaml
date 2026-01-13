@@ -1,5 +1,1 @@
-image:
-  repository: alpine
-  tag: "3.19"
-
-env: prod
+# Values for pifagor2-web in prod

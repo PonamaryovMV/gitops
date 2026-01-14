@@ -5,4 +5,4 @@ appVersion: "0.1.0"
 dependencies:
   - name: main
     version: "0.0.7"  # версия чарта main.tgz
-    repository: "https://raw.githubusercontent.com/PonamaryovMV/helm-base-charts/main/index.yaml"
+    repository: "git@github.com:PonamaryovMV/helm-base-charts.git"

@@ -4,5 +4,6 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: main
-    version: "0.0.7"                       # версия чарта main
-    repository: "https://github.com/PonamaryovMV/helm-base-charts.git"
+    version: "0.0.7"
+    repository: "git+https://github.com/PonamaryovMV/helm-base-charts.git"
+

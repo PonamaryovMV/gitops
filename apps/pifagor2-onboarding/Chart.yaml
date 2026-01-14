@@ -6,4 +6,4 @@ appVersion: "0.1.0"
 dependencies:
   - name: main
     version: "0.0.7"
-    repository: "http://nexus.local/repository/gitops/"
+    repository: "http://nexus-test-nexus-repository-manager.default.svc.cluster.local:8081/repository/gitops/"

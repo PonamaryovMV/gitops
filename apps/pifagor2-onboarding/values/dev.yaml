@@ -1,17 +1,16 @@
-main:
-  replicaCount: 1
+replicaCount: 1
 
-  image:
-    repository: nginx
-    tag: "1.25"
-    pullPolicy: IfNotPresent
+image:
+  repository: nginx
+  tag: "1.25"
+  pullPolicy: IfNotPresent
 
-  nameOverride: ""
-  fullnameOverride: ""
+nameOverride: ""
+fullnameOverride: ""
 
-  serviceAccount:
-    create: false
+serviceAccount:
+  create: false
 
-  podAnnotations: {}
+podAnnotations: {}
 
-  resources: {}
+resources: {}

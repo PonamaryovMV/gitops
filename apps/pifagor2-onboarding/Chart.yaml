@@ -2,7 +2,8 @@ apiVersion: v2
 name: pifagor2-onboarding
 version: 0.1.0
 appVersion: "0.1.0"
+
 dependencies:
   - name: main
-    version: "0.0.7"  # версия чарта main.tgz
-    repository: "https://github.com/PonamaryovMV/helm-base-charts/raw/refs/heads/main/main-0.0.7.tgz"
+    version: "0.0.7"
+    repository: "http://nexus.local/repository/gitops/"
